@@ -1,0 +1,35 @@
+---
+description: Markdown編集後に markdownlint 指摘を解消する
+globs: "**/*.md"
+alwaysApply: false
+---
+
+# Markdown lint after edit
+
+Markdown ファイルを新規作成または編集したら、完了前に必ず lint を確認し、指摘を解消する。
+
+## Workflow
+
+1. 編集を書き込む
+2. `ReadLints`（または同等）で当該 `.md` の診断を取得する
+3. 警告・エラーが残っていれば修正する
+4. 再確認して指摘ゼロにしてから完了とする
+
+編集したファイルだけを対象にする。無関係な Markdown の一括整形はしない。
+
+## Common fixes (MD034)
+
+裸 URL はリンクにする。
+
+```markdown
+<!-- BAD -->
+https://example.com/docs
+
+<!-- GOOD -->
+[example docs](https://example.com/docs)
+```
+
+## Notes
+
+- テーブル整形や見出し階層など、他の markdownlint ルールも同様に直す
+- 意図的にルールを無視する場合のみ、その行に disable コメントを付け、理由を残す
