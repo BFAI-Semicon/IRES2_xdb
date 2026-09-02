@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ARIM RDE 送出調査</title>
+<style>
+  :root {
+    --ink: #1f2933;
+    --muted: #616e7c;
+    --line: #d9e2ec;
+    --bg: #f7f9fb;
+    --card: #ffffff;
+    --blue: #2b6cb0;
+    --blue-bg: #ebf4ff;
+    --green: #2f855a;
+    --green-bg: #f0fff4;
+    --red: #c53030;
+    --red-bg: #fff5f5;
+    --amber: #b7791f;
+    --amber-bg: #fffbeb;
+    --gray-bg: #edf2f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.8;
+  }
+  header {
+    background: linear-gradient(135deg, #1a365d, #2b6cb0);
+    color: #fff;
+    padding: 40px 24px 32px;
+  }
+  header .wrap { max-width: 960px; margin: 0 auto; }
+  header h1 { margin: 0 0 8px; font-size: 1.9rem; }
+  header p { margin: 4px 0; opacity: .9; }
+  main { max-width: 960px; margin: 0 auto; padding: 24px; }
+  nav.toc {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 28px;
+  }
+  nav.toc ol { margin: 6px 0 0; padding-left: 22px; columns: 2; }
+  nav.toc a { color: var(--blue); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+  section { margin-bottom: 44px; }
+  h2 {
+    font-size: 1.4rem; margin: 0 0 16px; padding-bottom: 8px;
+    border-bottom: 3px solid var(--blue);
+  }
+  h2 .num {
+    display: inline-block; background: var(--blue); color: #fff; border-radius: 6px;
+    width: 32px; text-align: center; margin-right: 10px; font-size: 1rem;
+  }
+  h3 { font-size: 1.1rem; margin: 24px 0 10px; color: var(--blue); }
+  p { margin: 8px 0; }
+  .lead { font-size: 1.05rem; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px;
+  }
+  .card h4 { margin: 0 0 8px; font-size: 1.02rem; }
+  .card.ok { border-top: 5px solid var(--green); }
+  .card.ng { border-top: 5px solid var(--red); }
+  .card.note { border-top: 5px solid var(--amber); }
+  .card.info { border-top: 5px solid var(--blue); }
+  .badge {
+    display: inline-block; padding: 1px 10px; border-radius: 999px; font-size: .82rem; font-weight: 600;
+    vertical-align: middle;
+  }
+  .badge.ok { background: var(--green-bg); color: var(--green); border: 1px solid #9ae6b4; }
+  .badge.ng { background: var(--red-bg); color: var(--red); border: 1px solid #feb2b2; }
+  .badge.note { background: var(--amber-bg); color: var(--amber); border: 1px solid #f6e05e; }
+  .badge.info { background: var(--blue-bg); color: var(--blue); border: 1px solid #90cdf4; }
+  .callout {
+    border-left: 5px solid var(--blue); background: var(--blue-bg);
+    padding: 12px 16px; border-radius: 6px; margin: 14px 0;
+  }
+  .callout.warn { border-color: var(--amber); background: var(--amber-bg); }
+  .callout.stop { border-color: var(--red); background: var(--red-bg); }
+  .callout.good { border-color: var(--green); background: var(--green-bg); }
+  .callout strong { display: block; margin-bottom: 4px; }
+  /* 手順フロー */
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; counter-reset: step; margin: 14px 0; }
+  .flow .step {
+    flex: 1 1 140px; background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 12px 12px 14px; position: relative; font-size: .95rem;
+  }
+  .flow .step::before {
+    counter-increment: step; content: counter(step);
+    display: inline-block; background: var(--blue); color: #fff; border-radius: 50%;
+    width: 24px; height: 24px; line-height: 24px; text-align: center; font-size: .85rem; margin-bottom: 6px;
+  }
+  .flow .step small { display: block; color: var(--muted); font-size: .82rem; line-height: 1.5; }
+  .flow .step.who { border-style: dashed; }
+  /* 表 */
+  table { width: 100%; border-collapse: collapse; background: var(--card); margin: 12px 0; font-size: .95rem; }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--gray-bg); }
+  td.c, th.c { text-align: center; }
+  .yes { color: var(--green); font-weight: 700; }
+  .no { color: var(--red); font-weight: 700; }
+  /* 用語 */
+  dl.terms { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+  dl.terms dt { font-weight: 700; color: var(--blue); }
+  dl.terms dd { margin: 0; }
+  ul { padding-left: 22px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  code { background: var(--gray-bg); padding: 1px 6px; border-radius: 4px; font-size: .92em; }
+  a { color: var(--blue); }
+  .status { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 10px 0; }
+  .status span { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 4px 12px; }
+  .status .arrow { border: none; background: none; color: var(--muted); padding: 0 2px; }
+  footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 24px; }
+  @media (max-width: 640px) { nav.toc ol { columns: 1; } dl.terms { grid-template-columns: 1fr; } }
+  @media print {
+    header { background: #2b6cb0 !important; -webkit-print-color-adjust: exact; }
+    body { background: #fff; }
+    nav.toc { display: none; }
+    section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>ARIM RDE への実験データ送出 ― 調査結果</h1>
+    <p>本システムに残した実験データを ARIM RDE に送る際、「どんなアカウントが要るか」「どうログインするか」「プログラムから自動で送れるか」を調べた結果をまとめたもの。</p>
+    <p>調査日: 2026-09-02 ／ 元資料: <code>docs/research-arim-rde-export.md</code></p>
+  </div>
+</header>
+
+<main>
+
+<nav class="toc" aria-label="目次">
+  <strong>目次</strong>
+  <ol>
+    <li><a href="#summary">結論</a></li>
+    <li><a href="#terms">用語を整理</a></li>
+    <li><a href="#account">アカウント ― 誰が登録できるのか</a></li>
+    <li><a href="#login">ログイン ― どう入るのか</a></li>
+    <li><a href="#api">API ― プログラムから自動で送れるのか</a></li>
+    <li><a href="#invoice">登録時に入力するもの</a></li>
+    <li><a href="#options">本システムはどう送るべきか</a></li>
+    <li><a href="#todo">確認が必要なこと</a></li>
+    <li><a href="#links">参考リンク</a></li>
+  </ol>
+</nav>
+
+<!-- 1. 結論 -->
+<section id="summary">
+  <h2><span class="num">1</span>結論</h2>
+  <div class="cards">
+    <div class="card ng">
+      <h4>プログラムから直接は送れない</h4>
+      <p>外部システム向けのデータ登録 API は公開されていない。ログインもブラウザ画面が前提で、システムが人の代わりに入る正規の手段はない。</p>
+    </div>
+    <div class="card note">
+      <h4>アカウントは個人の DICE アカウント</h4>
+      <p>登録する人ごとに DICE アカウントが必要。システム用の共通アカウントや API キーの仕組みはない。</p>
+    </div>
+    <div class="card ok">
+      <h4>現実的な送り方は「ファイルを作って、人が画面から登録」</h4>
+      <p>本システムが RDE の一括登録形式（ExcelInvoice）のファイルを作り、ユーザーが RDE の Web 画面でアップロードする方法が、公式に支えられた唯一の準自動化。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 用語 -->
+<section id="terms">
+  <h2><span class="num">2</span>用語を整理</h2>
+  <dl class="terms">
+    <dt>ARIM</dt><dd>マテリアル先端リサーチインフラ事業。全国の共用装置を使い、得たデータを登録することが求められる国の事業。</dd>
+    <dt>RDE</dt><dd>Research Data Express。NIMS（物質・材料研究機構）が運営する、実験データを登録・保管する Web システム。ARIM のデータの送り先。</dd>
+    <dt>DICE</dt><dd>NIMS のデータ基盤サービスの総称。RDE を使うためのアカウントは「DICE アカウント」と呼ぶ。</dd>
+    <dt>センターハブ</dt><dd>ARIM 事業の中核を担う NIMS 側の組織。RDE の運用や一括登録の作業を担う。</dd>
+    <dt>研究チーム</dt><dd>RDE 上で課題番号に紐づくメンバーの集まり。データ登録の権限はこの単位で決まる。</dd>
+    <dt>データセット</dt><dd>RDE で複数のデータをまとめる箱。装置ごと・課題ごとに開設される。本システムの「実験データ」は RDE の「データ」1 件に相当する。</dd>
+    <dt>データセットテンプレート</dt><dd>データセットごとに決まる「入力欄の定義」と「登録後の自動処理」のセット。装置担当が用意する。</dd>
+    <dt>送り状</dt><dd>RDE でデータを 1 件登録するときに入力する伝票のような画面。基本情報・試料情報・固有情報・ファイルから成る。</dd>
+    <dt>ExcelInvoice</dt><dd>送り状の内容を Excel の表にまとめ、多数のデータを 1 回の操作で登録する RDE の機能。</dd>
+    <dt>DICE ID（UUID）</dt><dd>RDE 内部でユーザーを識別する長い英数字の ID。ExcelInvoice ではメールアドレスではなくこの ID で人を指定する。</dd>
+  </dl>
+</section>
+
+<!-- 3. アカウント -->
+<section id="account">
+  <h2><span class="num">3</span>アカウント ― 誰が登録できるのか</h2>
+  <p class="lead">RDE にデータを登録するには、登録する人本人の <strong>DICE アカウント</strong>が必要。ID はメールアドレス。</p>
+
+  <div class="callout warn">
+    <strong>メールアドレスの条件</strong>
+    所属機関から支給されたメールアドレスのみ使える。Gmail などのフリーメールは不可。ARIM の利用申請で使ったアドレスと同じものでなければならない。
+  </div>
+
+  <h3>アカウントが使えるようになるまでの流れ</h3>
+  <div class="flow">
+    <div class="step">ARIM 利用申請システムでユーザー登録<small>所属機関のメールアドレスで</small></div>
+    <div class="step">DICE アカウントを作成<small>データ提供「あり」の場合に必要</small></div>
+    <div class="step">利用申請し、課題が採択される<small>課題番号が付く</small></div>
+    <div class="step">研究チームに課題番号を紐付け<small>機関のスタッフが行う</small></div>
+    <div class="step">データセットを開設<small>装置ごと</small></div>
+    <div class="step">データ登録<small>ここから送出できる</small></div>
+  </div>
+
+  <h3>研究チームの中の役割と、できること</h3>
+  <p>同じ研究チームでも、役割によってできることが違う。データを登録できるのは 4 つの役割。</p>
+  <table>
+    <thead>
+      <tr><th>役割</th><th>RDE 上の名前</th><th class="c">データ登録</th><th class="c">閲覧・ダウンロード</th><th class="c">削除</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>研究チーム管理者</td><td>OWNER</td><td class="c yes">できる</td><td class="c yes">できる</td><td class="c yes">できる</td></tr>
+      <tr><td>管理者代理</td><td>ASSISTANT</td><td class="c yes">できる</td><td class="c yes">できる</td><td class="c yes">できる</td></tr>
+      <tr><td>研究チームメンバ</td><td>MEMBER</td><td class="c yes">できる</td><td class="c yes">できる</td><td class="c no">できない</td></tr>
+      <tr><td>データ登録代行者</td><td>AGENT</td><td class="c yes">できる</td><td class="c no">できない</td><td class="c no">できない</td></tr>
+      <tr><td>データ閲覧者</td><td>VIEWER</td><td class="c no">できない</td><td class="c yes">できる</td><td class="c no">できない</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>「データ所有者」「試料管理者」は役割ではなく、データに付ける属性。持っていても権限は増えない。</li>
+    <li>ARIM のスタッフは「登録代行」はできるが、登録されたデータを見たり直したりはできない。</li>
+    <li>ExcelInvoice で人を指定するときは DICE ID（UUID）を使う。RDE 閲覧アプリで自分の名前をクリックしたときの URL の <code>users/</code> 以降の文字列がそれ。</li>
+  </ul>
+</section>
+
+<!-- 4. ログイン -->
+<section id="login">
+  <h2><span class="num">4</span>ログイン ― どう入るのか</h2>
+  <p class="lead">RDE には「データ登録アプリ」と「データ閲覧アプリ」があり、URL が違う。どちらもブラウザから入る。</p>
+
+  <h3>ログインの手順</h3>
+  <div class="flow">
+    <div class="step">RDE のアプリを開く<small>Chrome / Edge / Firefox / Safari の最新版</small></div>
+    <div class="step">メールアドレスを入力</div>
+    <div class="step">「DICE アカウントでログイン」を選ぶ<small>「NIMS アカウント」は NIMS 内ネットワーク限定</small></div>
+    <div class="step">パスワードを入力</div>
+  </div>
+
+  <div class="cards">
+    <div class="card info">
+      <h4>パスワードの決まり</h4>
+      <p>英大文字・英小文字・数字・記号の 4 種類をすべて含み、10 文字以上。間違え続けると 30 分ロックされる。</p>
+    </div>
+    <div class="card note">
+      <h4>多要素認証（MFA）</h4>
+      <p>スマートフォンの認証アプリ、またはメールで届くワンタイムパスワードを追加できる。今は任意だが、2026 年 4 月に「強く推奨」と告知された。将来必須になる可能性がある。</p>
+    </div>
+    <div class="card info">
+      <h4>ログインの有効時間</h4>
+      <p>内部のトークンは 1 時間で切れるが、ブラウザを開いていれば自動で延長され、その日のうちは使い続けられる。</p>
+    </div>
+  </div>
+
+  <div class="callout stop">
+    <strong>本システムにとっての意味</strong>
+    ログインの仕組み（認証プロトコル）や、外部システムを登録して連携する方法は公開されていない。つまり、本システムがユーザーの代わりにログインして RDE に入る正規の方法はない。ユーザーのパスワードを預かって画面を自動操作する方法は、規約違反や MFA で動かなくなるリスクがあり、採るべきではない。
+  </div>
+</section>
+
+<!-- 5. API -->
+<section id="api">
+  <h2><span class="num">5</span>API ― プログラムから自動で送れるのか</h2>
+
+  <div class="callout stop">
+    <strong>結論: 外部から使えるデータ登録 API はない</strong>
+    公式サイト、ARIM の手引き、RDEToolKit の説明書、RDE の論文のいずれにも記載がない。内部向けの API（「Sample API」）への言及はあるが、仕様も認証方法も公開されていない。
+  </div>
+
+  <h3>よくある誤解: RDEToolKit で送れるのでは？</h3>
+  <p>RDEToolKit は NIMS が公開している Python のライブラリだが、これは <strong>RDE の中で動く自動処理（データセットテンプレート）を作るための道具</strong>であり、データを RDE に送る機能は持たない。手元で動かせるのは、登録前にファイルの形式を確認する目的にとどまる。</p>
+
+  <h3>一括登録はできるのか（公式 FAQ より）</h3>
+  <ul>
+    <li>決められた形式に揃えれば、一括登録できる仕組み自体はある。</li>
+    <li>ただし、ユーザーや各機関の技術スタッフが自分で行うことはできず、<strong>センターハブのシステムエンジニアに依頼</strong>する形になる。</li>
+    <li>事前にセンターハブと技術的な確認を行い、データを整える処理（構造化スクリプト）を作る必要がある。</li>
+    <li>試験用の環境もセンターハブしか使えない。</li>
+  </ul>
+
+  <h3>公式に使える準自動化: ExcelInvoice モード <span class="badge ok">利用可</span></h3>
+  <p>「Excel の 1 行 = データ 1 件」として表を作り、登録するファイルを zip にまとめ、1 回のアップロード操作で多数のデータを登録できる機能。</p>
+  <div class="cards">
+    <div class="card info">
+      <h4>用意するもの</h4>
+      <ul>
+        <li>ファイル名が <code>_excel_invoice.xlsx</code> で終わる Excel</li>
+        <li>登録するデータファイルを入れた zip</li>
+      </ul>
+    </div>
+    <div class="card note">
+      <h4>前提と注意</h4>
+      <ul>
+        <li>送り先データセットのテンプレートが ExcelInvoice に対応している必要がある（装置担当が用意）</li>
+        <li>人は DICE ID（UUID）、既存の試料は試料 UUID で指定。合わないと登録エラー</li>
+      </ul>
+    </div>
+    <div class="card info">
+      <h4>上限</h4>
+      <ul>
+        <li>1 ファイルあたり 2 GB</li>
+        <li>ファイル数は無制限</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>登録した後の流れ</h3>
+  <div class="status">
+    <span>受付完了</span><span class="arrow">→</span>
+    <span>データ構造化開始</span><span class="arrow">→</span>
+    <span class="yes">正常終了</span><span class="arrow">または</span><span class="no">異常終了</span>
+  </div>
+  <p>自動で通知は来ない。RDE の画面を更新して自分で確認する。ブラウザを閉じても処理はサーバー側で続く。</p>
+</section>
+
+<!-- 6. 送り状 -->
+<section id="invoice">
+  <h2><span class="num">6</span>登録時に入力するもの（送り状）</h2>
+  <p class="lead">データ 1 件ごとに、次の 4 つのまとまりを入力する。本システムから送るときは、これらを埋められる情報を持っておく必要がある。</p>
+  <table>
+    <thead><tr><th style="width:26%">まとまり</th><th>項目</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>基本情報</td>
+        <td>記入年月日（自動）、データ投入者（ログインした人が自動で入る）、<strong>データ名（必須）</strong>、実験 ID、説明、<strong>装置（必須）</strong>、データ所有者</td>
+      </tr>
+      <tr>
+        <td>試料情報</td>
+        <td>試料名（ローカル ID）、化学式・組成式・分子式、参考 URL、タグ、試料の説明、試料管理者</td>
+      </tr>
+      <tr>
+        <td>固有情報</td>
+        <td>装置ごとに違う手入力の項目。定義ファイル <code>invoice.schema.json</code> で決まり、必須項目があることもある</td>
+      </tr>
+      <tr>
+        <td>ファイル</td>
+        <td>データファイル（装置ごとに決まった拡張子。RDE が自動処理する対象）、添付ファイル（任意）</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>本システムの用語との対応: 本システムの「実験データ」= RDE の「データ」1 件、「固有情報」= 固有情報、「試料」= 試料情報、「添付」= 添付ファイル。</p>
+</section>
+
+<!-- 7. 選択肢 -->
+<section id="options">
+  <h2><span class="num">7</span>本システムはどう送るべきか</h2>
+  <div class="cards">
+    <div class="card ok">
+      <h4>案 A. 送出パッケージを作る <span class="badge ok">推奨</span></h4>
+      <p>本システムが ExcelInvoice 形式の Excel と zip を作る。ユーザーはそれを RDE の画面からアップロードする。</p>
+      <p><strong>良い点:</strong> RDE が公式に支える方法の範囲内。ログインは RDE 側の画面で済むため、本システムがパスワードを扱わない。</p>
+    </div>
+    <div class="card ng">
+      <h4>案 B. ブラウザを自動操作する <span class="badge ng">非推奨</span></h4>
+      <p>ユーザーの DICE の ID・パスワードを本システムが預かり、画面操作をプログラムで再現する。</p>
+      <p><strong>問題点:</strong> 利用規約に抵触するおそれ。MFA が必須化されると動かなくなる。RDE の画面が変わるたびに壊れる。</p>
+    </div>
+    <div class="card note">
+      <h4>案 C. 正式な連携を依頼する <span class="badge note">並行して進める</span></h4>
+      <p>センターハブや装置担当に、一括登録や API 連携ができないか相談する。</p>
+      <p><strong>位置づけ:</strong> 実現すれば案 A より楽になるが、可否と時期は相手次第。案 A を進めながら問い合わせる。</p>
+    </div>
+  </div>
+
+  <h3>案 A を採る場合、本システム側で持つ必要があるもの</h3>
+  <ul>
+    <li><strong>送出プロファイル:</strong> 課題番号（JPMXP12 から始まる 15 桁）、送り先データセット、ユーザーの DICE ID（UUID）、試料と試料 UUID の対応表</li>
+    <li><strong>固有情報の写像:</strong> 装置ごとの <code>invoice.schema.json</code> を装置担当から入手し、本システムの固有情報欄と項目を対応づける</li>
+    <li><strong>送出結果の記録:</strong> RDE から自動で結果は返らないため、ユーザーが RDE 画面で「正常終了」を確認し、本システムに記録する半自動の形になる</li>
+    <li><strong>設計上の変化:</strong> 当初候補だった「外部認証・送出ジョブ」の仕組みは不要になる見込み（認証は RDE 側の画面で完結する）</li>
+  </ul>
+</section>
+
+<!-- 8. 未確定 -->
+<section id="todo">
+  <h2><span class="num">8</span>確認が必要なこと</h2>
+  <p>装置担当またはセンターハブに問い合わせて確定させる項目。</p>
+  <table>
+    <thead><tr><th style="width:55%">確認事項</th><th>確定しないと困ること</th></tr></thead>
+    <tbody>
+      <tr><td>対象装置のデータセットテンプレートが ExcelInvoice に対応しているか</td><td>対応していなければ案 A が成り立たず、1 件ずつ画面入力になる</td></tr>
+      <tr><td>半導体製造装置・検査装置の登録ファイル形式（RDE が処理する拡張子）</td><td>本システムから出すファイルの形が決められない</td></tr>
+      <tr><td>一括登録の依頼を受け付けてもらえるか、どれくらい時間がかかるか</td><td>案 C の見込みが立たない</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 9. リンク -->
+<section id="links">
+  <h2><span class="num">9</span>参考リンク</h2>
+  <ul>
+    <li><a href="https://www.nims.go.jp/arim/data/data.html">NIMS-ARIM データ共用について</a></li>
+    <li><a href="https://www.nims.go.jp/arim/data/ebi1cc0000000088-att/RDE_manual.pdf">RDEのデータ登録の手引き（ARIM センターハブ、2025-09-30）</a></li>
+    <li><a href="https://arim.yz.yamagata-u.ac.jp/images/RDE_manual.pdf">RDEの操作手引き Ver.5.0.0（FAQ 含む）</a></li>
+    <li><a href="https://dice.nims.go.jp/services/RDE/">DICE RDE サービス紹介</a> ／ <a href="https://dice.nims.go.jp/news/2026/04/20260415.html">多要素認証の案内</a></li>
+    <li><a href="https://nims-mdpf.github.io/rdetoolkit/">RDEToolKit ドキュメント</a> ／ <a href="https://dice.nims.go.jp/services/RDE/service_menu/catalog/manuals/excel_invoice/excel_invoice/">エクセルインボイス機能</a></li>
+    <li><a href="https://rde-entry-arim.nims.go.jp/">RDE データ登録アプリ</a> ／ <a href="https://rde.nims.go.jp/">RDE データ閲覧アプリ</a></li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  この解説は <code>docs/research-arim-rde-export.md</code> の内容を、初めて読む人向けに言い換えたもの。判断の根拠は元資料と参考リンクを参照。
+</footer>
+
+</body>
+</html>
