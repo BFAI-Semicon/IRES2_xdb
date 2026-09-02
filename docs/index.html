@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IRES2_xdb ― 資料一覧</title>
+<style>
+  :root {
+    --ink: #1f2933;
+    --muted: #616e7c;
+    --line: #d9e2ec;
+    --bg: #f7f9fb;
+    --card: #ffffff;
+    --blue: #2b6cb0;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.8;
+  }
+  header {
+    background: linear-gradient(135deg, #1a365d, #2b6cb0);
+    color: #fff;
+    padding: 40px 24px 32px;
+  }
+  header .wrap, main { max-width: 720px; margin: 0 auto; }
+  header h1 { margin: 0 0 8px; font-size: 1.8rem; }
+  header p { margin: 4px 0; opacity: .9; }
+  main { padding: 28px 24px 48px; }
+  .card {
+    display: block;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin: 0 0 16px;
+    text-decoration: none;
+    color: inherit;
+    border-top: 5px solid var(--blue);
+    transition: box-shadow .15s ease;
+  }
+  .card:hover { box-shadow: 0 4px 14px rgba(26, 54, 93, .12); }
+  .card h2 { margin: 0 0 6px; font-size: 1.15rem; color: var(--blue); }
+  .card p { margin: 0; color: var(--muted); font-size: .95rem; }
+  footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 0 24px 32px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>IRES2_xdb ― 資料一覧</h1>
+    <p>実験データ管理システムの説明資料。</p>
+  </div>
+</header>
+<main>
+  <a class="card" href="use-cases.html">
+    <h2>ユースケース</h2>
+    <p>装置の前で残す実験データの登録から、ARIM RDE への送出までの利用場面。</p>
+  </a>
+  <a class="card" href="research-arim-rde-export.html">
+    <h2>ARIM RDE 送出調査</h2>
+    <p>本システムから ARIM RDE へ送る際のアカウント・ログイン・API・送り方の調査結果。</p>
+  </a>
+</main>
+<footer>
+  リポジトリ: <a href="https://github.com/BFAI-Semicon/IRES2_xdb">BFAI-Semicon/IRES2_xdb</a>
+</footer>
+</body>
+</html>
