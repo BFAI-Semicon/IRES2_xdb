@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>実験データ管理システム ユースケース</title>
+<style>
+  :root {
+    --ink: #1f2933;
+    --muted: #616e7c;
+    --line: #d9e2ec;
+    --bg: #f7f9fb;
+    --card: #ffffff;
+    --blue: #2b6cb0;
+    --blue-bg: #ebf4ff;
+    --green: #2f855a;
+    --green-bg: #f0fff4;
+    --red: #c53030;
+    --red-bg: #fff5f5;
+    --amber: #b7791f;
+    --amber-bg: #fffbeb;
+    --purple: #6b46c1;
+    --purple-bg: #faf5ff;
+    --gray-bg: #edf2f7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", "Noto Sans JP", sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.8;
+  }
+  header {
+    background: linear-gradient(135deg, #1a365d, #2b6cb0);
+    color: #fff;
+    padding: 40px 24px 32px;
+  }
+  header .wrap { max-width: 960px; margin: 0 auto; }
+  header h1 { margin: 0 0 8px; font-size: 1.9rem; }
+  header p { margin: 4px 0; opacity: .9; }
+  main { max-width: 960px; margin: 0 auto; padding: 24px; }
+  nav.toc {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 16px 20px; margin-bottom: 28px;
+  }
+  nav.toc ol { margin: 6px 0 0; padding-left: 22px; columns: 2; }
+  nav.toc a { color: var(--blue); text-decoration: none; }
+  nav.toc a:hover { text-decoration: underline; }
+  section { margin-bottom: 44px; }
+  h2 {
+    font-size: 1.4rem; margin: 0 0 16px; padding-bottom: 8px;
+    border-bottom: 3px solid var(--blue);
+  }
+  h2 .num {
+    display: inline-block; background: var(--blue); color: #fff; border-radius: 6px;
+    width: 32px; text-align: center; margin-right: 10px; font-size: 1rem;
+  }
+  h3 { font-size: 1.1rem; margin: 24px 0 10px; color: var(--blue); }
+  p { margin: 8px 0; }
+  .lead { font-size: 1.05rem; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px;
+  }
+  .card h4 { margin: 0 0 8px; font-size: 1.02rem; }
+  .card.ok { border-top: 5px solid var(--green); }
+  .card.ng { border-top: 5px solid var(--red); }
+  .card.note { border-top: 5px solid var(--amber); }
+  .card.info { border-top: 5px solid var(--blue); }
+  .badge {
+    display: inline-block; padding: 1px 10px; border-radius: 999px; font-size: .82rem; font-weight: 600;
+    vertical-align: middle;
+  }
+  .badge.user { background: var(--blue-bg); color: var(--blue); border: 1px solid #90cdf4; }
+  .badge.equip { background: var(--green-bg); color: var(--green); border: 1px solid #9ae6b4; }
+  .badge.group { background: var(--amber-bg); color: var(--amber); border: 1px solid #f6e05e; }
+  .badge.admin { background: var(--red-bg); color: var(--red); border: 1px solid #feb2b2; }
+  .badge.ext { background: var(--purple-bg); color: var(--purple); border: 1px solid #d6bcfa; }
+  .callout {
+    border-left: 5px solid var(--blue); background: var(--blue-bg);
+    padding: 12px 16px; border-radius: 6px; margin: 14px 0;
+  }
+  .callout.warn { border-color: var(--amber); background: var(--amber-bg); }
+  .callout.stop { border-color: var(--red); background: var(--red-bg); }
+  .callout.good { border-color: var(--green); background: var(--green-bg); }
+  .callout strong { display: block; margin-bottom: 4px; }
+  /* フェーズの流れ */
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; counter-reset: step; margin: 14px 0; }
+  .flow .step {
+    flex: 1 1 140px; background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px 12px 12px 14px; position: relative; font-size: .95rem;
+  }
+  .flow .step::before {
+    counter-increment: step; content: counter(step);
+    display: inline-block; background: var(--blue); color: #fff; border-radius: 50%;
+    width: 24px; height: 24px; line-height: 24px; text-align: center; font-size: .85rem; margin-bottom: 6px;
+  }
+  .flow .step small { display: block; color: var(--muted); font-size: .82rem; line-height: 1.5; }
+  /* ユースケース */
+  .uc {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 22px; margin: 16px 0; border-left: 6px solid var(--blue);
+  }
+  .uc h3 { margin: 0 0 10px; color: var(--ink); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .uc h3 .id { font-family: Consolas, Menlo, monospace; font-size: .9rem; color: var(--muted); }
+  .uc dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0; }
+  .uc dt { font-weight: 700; color: var(--blue); white-space: nowrap; }
+  .uc dd { margin: 0; }
+  .uc dd ul { margin: 0; }
+  .uc .ask { background: var(--amber-bg); border-radius: 6px; padding: 8px 12px; margin-top: 10px; }
+  .uc .ask strong { color: var(--amber); }
+  /* 表 */
+  table { width: 100%; border-collapse: collapse; background: var(--card); margin: 12px 0; font-size: .95rem; }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--gray-bg); }
+  td.c, th.c { text-align: center; }
+  .yes { color: var(--green); font-weight: 700; }
+  .no { color: var(--red); font-weight: 700; }
+  /* 用語 */
+  dl.terms { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; }
+  dl.terms dt { font-weight: 700; color: var(--blue); }
+  dl.terms dd { margin: 0; }
+  ul { padding-left: 22px; margin: 8px 0; }
+  li { margin: 4px 0; }
+  code { background: var(--gray-bg); padding: 1px 6px; border-radius: 4px; font-size: .92em; }
+  a { color: var(--blue); }
+  /* チェックリスト */
+  ul.check { list-style: none; padding-left: 0; }
+  ul.check li { padding-left: 34px; position: relative; margin: 8px 0; }
+  ul.check li::before {
+    content: ""; position: absolute; left: 0; top: 6px; width: 20px; height: 20px;
+    border: 2px solid var(--blue); border-radius: 4px; background: var(--card);
+  }
+  footer { text-align: center; color: var(--muted); font-size: .85rem; padding: 24px; }
+  @media (max-width: 640px) {
+    nav.toc ol { columns: 1; }
+    dl.terms, .uc dl { grid-template-columns: 1fr; }
+  }
+  @media print {
+    header { background: #2b6cb0 !important; -webkit-print-color-adjust: exact; }
+    body { background: #fff; }
+    nav.toc { display: none; }
+    section, .uc { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>実験データ管理システム ― ユースケース</h1>
+    <p>装置の前で残す実験データを本システムに正式な記録として登録し、後から ARIM RDE へ送出するまでの利用場面を、開発前に現場と照合するための資料。</p>
+    <p>元資料: <code>docs/use-cases.md</code>、<code>docs/use-cases-phase1.md</code>、<code>docs/use-cases-phase2-3.md</code> ／ 用語: <code>CONTEXT.md</code></p>
+  </div>
+</header>
+
+<main>
+
+<nav class="toc" aria-label="目次">
+  <strong>目次</strong>
+  <ol>
+    <li><a href="#overview">全体像</a></li>
+    <li><a href="#roles">ロール ― だれが何をするか</a></li>
+    <li><a href="#group">グループ ― 記録をまとめる範囲</a></li>
+    <li><a href="#terms">用語</a></li>
+    <li><a href="#phase1-rules">フェーズ1に共通する決まり</a></li>
+    <li><a href="#phase1">フェーズ1 ― 本システムへの登録（UC-01〜10）</a></li>
+    <li><a href="#phase2-3">フェーズ2–3 ― 送出・入力拡張（UC-11〜13）</a></li>
+    <li><a href="#out">対象外</a></li>
+    <li><a href="#session">確認セッションの進め方</a></li>
+    <li><a href="#checklist">確認チェックリスト</a></li>
+  </ol>
+</nav>
+
+<!-- 1. 全体像 -->
+<section id="overview">
+  <h2><span class="num">1</span>全体像</h2>
+  <p class="lead">本システムは、オンラインに繋がらない装置の前で行った 1 操作を「実験データ」1 件として登録し、正式な記録（正本）として保管する。ARIM RDE への送出は、登録した後に行う別の段階。</p>
+  <div class="flow">
+    <div class="step">フェーズ1 登録<small>試料を作り、装置を選び、実験データを本システムに残す。訂正と検索もここに含む</small></div>
+    <div class="step">フェーズ2 送出<small>登録済みの実験データを選び、ARIM RDE へ送出</small></div>
+    <div class="step">フェーズ3 入力拡張<small>OCR（撮影した画像からの読み取り）と API（外部システムからの登録）。フェーズ2 と順序は問わない</small></div>
+  </div>
+  <div class="callout good">
+    <strong>この資料の使い方</strong>
+    各ユースケース（UC）に「確認したいこと」を付けている。現場の実態と合っているか、開発前にこの項目を確かめる。
+  </div>
+</section>
+
+<!-- 2. ロール -->
+<section id="roles">
+  <h2><span class="num">2</span>ロール ― だれが何をするか</h2>
+  <table>
+    <thead>
+      <tr><th style="width:18%">ロール</th><th style="width:26%">だれか</th><th>できること</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="badge user">ユーザー</span></td>
+        <td>装置の前で記録を残す人</td>
+        <td>試料の作成・編集、実験データの登録、自分が登録した実験データの訂正</td>
+      </tr>
+      <tr>
+        <td><span class="badge equip">装置担当</span></td>
+        <td>ユーザーが持つ役割</td>
+        <td>全装置の固有情報欄を定義、装置台帳を管理。値の入力はユーザーとして行う</td>
+      </tr>
+      <tr>
+        <td><span class="badge group">グループ担当</span></td>
+        <td>ユーザーが持つ、グループごとの役割</td>
+        <td>グループのメンバーの追加・除外、グループの削除</td>
+      </tr>
+      <tr>
+        <td><span class="badge admin">システム管理者</span></td>
+        <td>本システムの運用者</td>
+        <td>ユーザー・グループ・試料・実験データの削除</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>役割の重なり</strong>
+    装置担当・グループ担当は、いずれもユーザーが追加で持つ役割。ユーザーでない装置担当・グループ担当はいない。システム管理者はユーザーではなく、記録は残さない。
+  </div>
+</section>
+
+<!-- 3. グループ -->
+<section id="group">
+  <h2><span class="num">3</span>グループ ― 記録をまとめる範囲</h2>
+  <div class="cards">
+    <div class="card info">
+      <h4>グループとは</h4>
+      <p>ユーザーが属する、本システムのまとまり。大学の研究室や企業の部署を想定。ユーザーは複数のグループに属せる。</p>
+    </div>
+    <div class="card info">
+      <h4>試料との関係</h4>
+      <p>試料はグループに属する。試料名が一意である範囲もグループ。</p>
+    </div>
+    <div class="card note">
+      <h4>実験データ・装置との関係</h4>
+      <p>実験データはグループを持たない（属するグループは試料から決まる）。装置はグループに属さず、システム全体で 1 つの台帳。</p>
+    </div>
+    <div class="card note">
+      <h4>ARIM RDE の「所属」とは別</h4>
+      <p>ARIM RDE の所属（organization）は、データ所有者や試料管理者の機関名。本システムのグループとは別の概念。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. 用語 -->
+<section id="terms">
+  <h2><span class="num">4</span>用語</h2>
+  <p>ARIM RDE と同じ項目は ARIM RDE と同じ名称を使う。例外として、ARIM RDE の登録単位「データ」は本システムでは「実験データ」と呼ぶ。</p>
+  <dl class="terms">
+    <dt>実験データ</dt><dd>装置 1 台・1 操作の記録であり、登録の単位。ARIM RDE の「データ」1 件に対応。</dd>
+    <dt>登録</dt><dd>本システムの正本に実験データが残り、後から直せる状態になること。ARIM RDE への送出は含まない。</dd>
+    <dt>正本</dt><dd>記録の正式な置き場所。本システムが正本で、ARIM RDE は後から出す先。</dd>
+    <dt>試料</dt><dd>グループに属する実体で、実験データが指す対象。ARIM RDE の試料に対応。</dd>
+    <dt>試料名</dt><dd>ユーザーにとっての試料の識別子。同じグループ内で一意。</dd>
+    <dt>化学式・組成式・分子式</dt><dd>試料に属する組成。空欄でも登録可。</dd>
+    <dt>装置</dt><dd>製造装置または検査装置。実験データが指す機械。</dd>
+    <dt>製造装置</dt><dd>試料の状態を変える装置（成膜、エッチングなど）。</dd>
+    <dt>検査装置</dt><dd>試料を観察・測定する装置（顕微鏡、膜厚計など）。</dd>
+    <dt>装置台帳</dt><dd>本システムに登録された装置の一覧。システム全体で 1 つ。</dd>
+    <dt>固有情報</dt><dd>実験データに属する、その装置用のパラメータ（温度、圧力、測定条件など）。欄は装置担当が定義し、値はユーザーが入力。</dd>
+    <dt>添付</dt><dd>実験データに任意で付くファイル（ログ、写真など）。</dd>
+    <dt>実施日時</dt><dd>その操作を行った時。登録した時とは別。</dd>
+    <dt>訂正履歴</dt><dd>実験データまたは試料の過去の値の記録。最新の値が現在の内容として見える。</dd>
+    <dt>データセット</dt><dd>ARIM RDE で複数のデータをまとめる単位。送出時に課題番号などの情報が必要。</dd>
+  </dl>
+</section>
+
+<!-- 5. フェーズ1 共通 -->
+<section id="phase1-rules">
+  <h2><span class="num">5</span>フェーズ1に共通する決まり</h2>
+  <div class="cards">
+    <div class="card ok">
+      <h4>本システムが正本</h4>
+      <p>本システムに登録した実験データが正式な記録。ARIM RDE は後から送る先。</p>
+    </div>
+    <div class="card ng">
+      <h4>実験データは削除しない</h4>
+      <p>登録した実験データは削除できない。誤りは訂正で直す。失敗・中断・やり直しも同じように登録。</p>
+    </div>
+    <div class="card info">
+      <h4>訂正すると履歴が残る</h4>
+      <p>訂正後は最新の内容が正式な記録。前の内容は訂正履歴に残る。</p>
+    </div>
+    <div class="card info">
+      <h4>試料とグループ</h4>
+      <p>試料は 1 つのグループに属する。実験データは 1 つまたは複数の試料を指定可。複数指定するときは同じグループの試料だけ。</p>
+    </div>
+    <div class="card note">
+      <h4>空欄でも登録可</h4>
+      <p>固有情報と添付ファイルは空欄でも登録可。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 6. フェーズ1 UC -->
+<section id="phase1">
+  <h2><span class="num">6</span>フェーズ1 ― 本システムへの登録</h2>
+  <p class="lead">ユーザーが装置の前で実験データを本システムに残すまでの場面。</p>
+
+  <div class="uc">
+    <h3><span class="id">UC-01</span>グループに所属する <span class="badge user">ユーザー</span></h3>
+    <dl>
+      <dt>すること</dt><dd>1 つ以上のグループに所属し、試料作成時にグループを選択。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>グループの単位は研究室か、部署か、別の区切りか</li>
+        <li>メンバーの追加や除外をだれが行うか。仮説: 「グループ担当」の役割を持つユーザーが行い、各グループに 1 人以上置く</li>
+        <li>グループを作ったユーザーが最初の担当。最後の 1 人は除外も辞退もできない（退職・卒業時は先に後任を指名）という運用で問題ないか</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="uc">
+    <h3><span class="id">UC-02</span>試料を作る <span class="badge user">ユーザー</span></h3>
+    <dl>
+      <dt>すること</dt><dd>グループを選び、試料名を付けて試料を作成。化学式・組成式・分子式は空欄でも可。</dd>
+      <dt>前提</dt><dd>同一グループ内における試料名は一意。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>現場で使っている試料名の付け方</li>
+        <li>組成は試料作成時に必須か、後から入力でもよいか</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="uc">
+    <h3><span class="id">UC-03</span>試料の内容を直す <span class="badge user">ユーザー</span></h3>
+    <dl>
+      <dt>だれが</dt><dd>その試料を作ったユーザー、またはその試料を使って実験データを登録したユーザー。</dd>
+      <dt>すること</dt><dd>試料の組成や名称などの誤りを訂正。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>「作った人と使った人だけが直せる」で現場は足りるか</li>
+        <li>同じグループの他のユーザーにも訂正を許したい場面があるか</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="uc">
+    <h3><span class="id">UC-04</span>装置を台帳に登録する <span class="badge equip">装置担当</span></h3>
+    <dl>
+      <dt>すること</dt><dd>製造装置か検査装置かを決めて、装置を台帳に登録。</dd>
+      <dt>前提</dt><dd>台帳はシステム全体で 1 つ。1 台の装置は主な用途でどちらか一方の種別。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>装置の追加、名称変更、使用終了を装置担当が行う形で問題ないか</li>
+        <li>現場で通じる装置の呼び名（装置に貼ってあるラベルなど）</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="uc">
+    <h3><span class="id">UC-05</span>固有情報の欄を決める <span class="badge equip">装置担当</span></h3>
+    <dl>
+      <dt>すること</dt><dd>装置ごとに、記録しておきたい項目（固有情報の欄）を定義。</dd>
+      <dt>前提</dt><dd>ユーザーが入力するのは欄の値だけ。欄そのものは作らない。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>どの装置でどんな欄が必要か（温度、圧力、膜厚、測定条件など）</li>
+        <li>欄を変更する頻度と、変更前に登録した実験データの見せ方</li>
+        <li>装置担当が全装置の欄を決める形で問題ないか</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="uc">
+    <h3><span class="id">UC-06</span>製造の実験データを登録する <span class="badge user">ユーザー</span></h3>
+    <dl>
+      <dt>すること</dt><dd>製造装置、試料（1 つ以上）、実施日時を選び、固有情報と添付ファイルを入力して登録。</dd>
+      <dt>前提</dt><dd>失敗、中断、やり直しも同じように登録。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>どこまでを 1 件の実験データとして扱うか（装置 1 台の 1 操作という区切りで合うか）</li>
+        <li>実施日時は装置の表示、手元のメモ、登録した時刻のどれを使うか</li>
+        <li>固有情報を入力せずに登録する場面があるか</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="uc">
+    <h3><span class="id">UC-07</span>検査の実験データを登録する <span class="badge user">ユーザー</span></h3>
+    <dl>
+      <dt>すること</dt><dd>UC-06 と同じ手順で、検査装置での作業を登録。</dd>
+      <dt>前提</dt><dd>同じ試料について、製造のあとに検査の実験データを続けて登録可。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>製造と検査で、入力してもらう項目に違いを付けたいか</li>
+        <li>1 つの試料に対する製造と検査のおおよその回数</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="uc">
+    <h3><span class="id">UC-08</span>ファイルを添付する <span class="badge user">ユーザー</span></h3>
+    <dl>
+      <dt>すること</dt><dd>実験データの登録時や訂正時に、ログや写真などのファイルを添付。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>よく添付するファイルの種類とおおよその大きさ</li>
+        <li>ARIM RDE に送るときの必須ファイルと、この添付を分けて考えられるか</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="uc">
+    <h3><span class="id">UC-09</span>実験データを訂正する <span class="badge user">ユーザー</span></h3>
+    <dl>
+      <dt>だれが</dt><dd>その実験データを登録したユーザーだけ。</dd>
+      <dt>すること</dt><dd>入力を間違えた実験データの内容を訂正。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>登録した本人以外が代わりに直す必要があるか</li>
+        <li>添付ファイルの差し替えや追加も訂正として扱うか</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="uc">
+    <h3><span class="id">UC-10</span>過去の記録を見る <span class="badge user">ユーザー</span></h3>
+    <dl>
+      <dt>だれが</dt><dd>ユーザー（見られる範囲は確認したい）。</dd>
+      <dt>すること</dt><dd>試料、装置、実施日などで検索し、最新の内容と訂正履歴を確認。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>他のグループの記録を見られてよいか</li>
+        <li>よく使う検索の仕方（試料名、装置、実施日、登録したユーザーなど）</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 7. フェーズ2–3 UC -->
+<section id="phase2-3">
+  <h2><span class="num">7</span>フェーズ2–3 ― 送出・入力拡張</h2>
+  <p class="lead">いずれも登録（フェーズ1）の後に行う。OCR と API はどちらを先にしてもよい。</p>
+
+  <div class="uc">
+    <h3><span class="id">UC-11</span>ARIM RDE へ送出する <span class="badge user">ユーザー</span></h3>
+    <dl>
+      <dt>だれが</dt><dd>ユーザー（送出を担当するユーザーを含む）。</dd>
+      <dt>すること</dt><dd>送る実験データを選び、データセットの情報（課題番号など）を添えて送出。</dd>
+      <dt>前提</dt><dd>送出したあとも、正式な記録は本システムのまま。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>送出のタイミング（その日のうち、週に 1 度、論文の前など）</li>
+        <li>1 回の送出でまとめる単位（データセット）の決め方</li>
+        <li>送出に失敗したとき、現場でどう分かるとよいか</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="uc">
+    <h3><span class="id">UC-12</span>OCR で登録する <span class="badge user">ユーザー</span></h3>
+    <dl>
+      <dt>すること</dt><dd>装置のパネルや紙のノートを撮影し、読み取り結果を確認・補正して登録。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>撮影する対象は装置のパネルか、紙のノートか、両方か</li>
+        <li>読み取り結果はユーザーが必ず確認する前提でよいか</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="uc">
+    <h3><span class="id">UC-13</span>API で登録する <span class="badge ext">外部システム</span></h3>
+    <dl>
+      <dt>だれが</dt><dd>連携する外部システム（ユーザーは間接的に関わる）。</dd>
+      <dt>すること</dt><dd>API から実験データを登録。</dd>
+      <dt>前提</dt><dd>権限や訂正の決まりは手入力と同じ。</dd>
+    </dl>
+    <div class="ask">
+      <strong>確認したいこと</strong>
+      <ul>
+        <li>連携したい装置やソフトがあるか、その優先度</li>
+        <li>API から登録した場合、登録したユーザーをどう特定するか</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 8. 対象外 -->
+<section id="out">
+  <h2><span class="num">8</span>対象外</h2>
+  <p>本システムでは次の機能を扱わない。</p>
+  <div class="cards">
+    <div class="card ng"><h4>装置予約</h4></div>
+    <div class="card ng"><h4>稼働見える化</h4></div>
+    <div class="card ng"><h4>映像化・画像解析</h4></div>
+    <div class="card ng"><h4>施設・工程の管理</h4></div>
+    <div class="card ng"><h4>ユーザーによる実験データの削除</h4></div>
+  </div>
+  <div class="callout warn">
+    <strong>確認したいこと</strong>
+    対象外のうち、現場で「必須」となるものがないか。
+  </div>
+</section>
+
+<!-- 9. 確認セッション -->
+<section id="session">
+  <h2><span class="num">9</span>確認セッションの進め方（案）</h2>
+  <div class="flow">
+    <div class="step">ロールの呼び方・おおよその人数<small>ユーザー、装置担当、グループ担当の実態</small></div>
+    <div class="step">1 日の作業をなぞる<small>UC-02 → UC-06/07 → UC-09 の順</small></div>
+    <div class="step">固有情報の欄例を書く<small>UC-05 で装置 1〜2 台分</small></div>
+    <div class="step">送出・拡張の必要時期<small>UC-11 以降は「いつ必要か」のみ</small></div>
+    <div class="step">対象外の確認<small>「必須」がないか</small></div>
+  </div>
+</section>
+
+<!-- 10. チェックリスト -->
+<section id="checklist">
+  <h2><span class="num">10</span>確認チェックリスト</h2>
+  <p>セッションの最後に、次の方針に合意できたかを確認する。</p>
+  <ul class="check">
+    <li>1 操作 = 1 実験データ。失敗・中断も登録し削除しない</li>
+    <li>正本は本システム。ARIM RDE は後から送る先</li>
+    <li>固有情報欄は装置担当が定義、ユーザーは値を入力</li>
+    <li>実験データの訂正は登録者のみ</li>
+    <li>試料編集は作成者とその試料を使ったユーザー</li>
+    <li>削除は表示から隠すだけで記録は残る（ユーザー・グループ・試料・実験データ）</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  この資料は <code>docs/use-cases.md</code> とその関連文書の内容を、現場との確認向けに再構成したもの。用語の定義は <code>CONTEXT.md</code> を参照。
+</footer>
+
+</body>
+</html>
