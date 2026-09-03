@@ -53,4 +53,5 @@ registration / ARIM RDE 送出の後続。既存の実験データモデルと�
 
 - 正本は本システム。OCR は登録経路の一つ
 - API との実装順序は未定（並列可）
+- 処理方式はサーバー側 OCR を推奨。読み取り結果は Web アプリ上で確認・訂正し、画像は添付として残す（`docs/research-ocr-approach.md`）
 - OCR エンジン・精度要件は design 時に選定
