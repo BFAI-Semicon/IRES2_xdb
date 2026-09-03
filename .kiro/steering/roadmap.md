@@ -30,6 +30,8 @@
 
 - 用語は `CONTEXT.md`。ARIM RDE と同一項目は同じ名称。登録単位だけは「実験データ」
 - 正本は本システム。ARIM RDE は後から出す先
+- 1 実験データ = 1 試料 = ARIM RDE の 1 データ。グループの役割はグループ担当とユーザーの 2 つに限る
+- DICE ID を持つのはユーザーのみ。送出に必要な属性の器は registration で用意し、値の利用は export で行う
 - アプリの技術スタックは未選定。requirements までは defer 可。design または `/kiro-spec-batch` 前に確定すること
 - Node LTS / Python 3.12（mise）はツールチェーン用。アプリ枠組みの決定ではない
 
@@ -40,10 +42,12 @@
   - 実験データの形（registration → export / OCR / API）
   - 固有情報欄のスキーマ（装置担当定義 → 登録・送出）
   - 試料・グループの編集権限（作成者／使用者）
+  - 送出用の属性（ユーザーの DICE ID、データ所有者、試料管理者、データファイル区分。registration で器、export で使用）
+  - 課題・データセット（グループ配下。export で管理）
 
 ## Specs (dependency order)
 
 - [ ] experimental-data-registration -- Web 手入力で実験データを本システムに登録する（台帳・試料・固有情報・役割・履歴を含む）。Dependencies: none
-- [ ] arim-rde-export -- 本システムの実験データを ARIM RDE へ送出する。Dependencies: experimental-data-registration
+- [ ] arim-rde-export -- 本システムの実験データを ExcelInvoice で ARIM RDE へ送出する（課題・データセット・送出記録を含む）。Dependencies: experimental-data-registration
 - [ ] ocr-registration -- OCR で実験データを登録する。Dependencies: experimental-data-registration, arim-rde-export
 - [ ] api-registration -- API で実験データを登録する。Dependencies: experimental-data-registration, arim-rde-export
